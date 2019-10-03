@@ -100,5 +100,5 @@ public
 # production email sending
 .env
 
-public/js/bundle.js
-public/js/bundle.js.map
+bundle.js
+bundle.js.map
