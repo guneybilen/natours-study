@@ -98,6 +98,7 @@ public
 .dynamodb/
 
 # production email sending
-sendgrid.env
+.env
 
-config.env
+public/js/bundle.js
+public/js/bundle.js.map
