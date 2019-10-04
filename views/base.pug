@@ -4,6 +4,7 @@ html
     block head
       meta(charset='UTF-8')
       meta(name='viewport' content='width=device-width, initial-scale=1.0')
+      meta(http-equiv="X-WebKit-CSP" content="default-src 'none'; script-src *; style-src *; img-src *")
       link(rel='stylesheet' href='/css/style.css')
       link(rel='shortcut icon' type='image/png' href='/img/favicon.png')
       link(rel='stylesheet' href='https://fonts.googleapis.com/css?family=Lato:300,300i,700')
@@ -24,4 +25,5 @@ html
     //script(src='/js/mapbox.js')
     //script(src='/js/login.js')
     script(src='https://js.stripe.com/v3/')
+    script(src="https://unpkg.com/@babel/standalone/babel.min.js")
     script(src='/js/bundle.js')

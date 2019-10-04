@@ -1,7 +1,16 @@
 const Tour = require('../models/tourModel');
 const User = require('../models/userModel');
+const Booking = require('../models/bookingModel');
 const catchAsync = require('../utils/catchAsync');
 const AppError = require('../utils/appError');
+
+exports.alerts = (req, res, next) => {
+  const { alert } = req.query;
+  if (alert === 'booking')
+    res.locals.alert =
+      "Your booking was successful! Please check your email for a confirmation. If your booking doesn't show up here immediatly, please come back later.";
+  next();
+};
 
 exports.getOverview = catchAsync(async (req, res, next) => {
   // 1) Get tour data from collection
@@ -39,7 +48,7 @@ exports.getLoginForm = (req, res) => {
   res.status(200).render('login', {
     title: 'Log into your account'
   });
-}; 
+};
 
 exports.getAccount = (req, res) => {
   res.status(200).render('account', {
@@ -47,10 +56,25 @@ exports.getAccount = (req, res) => {
   });
 };
 
+exports.getMyTours = catchAsync(async (req, res, next) => {
+  // 1) Find all bookings
+  const bookings = await Booking.find({ user: req.user.id });
+
+  // 2) Find tours with the returned IDs
+  const tourIDs = bookings.map(el => el.tour);
+  const tours = await Tour.find({ _id: { $in: tourIDs } });
+
+  res.status(200).render('overview', {
+    title: 'My Tours',
+    tours: tours
+  });
+  // next();
+});
+
 exports.updateUserData = catchAsync(async (req, res, next) => {
   // never update password with findByIdAndUpdate()
   // this method will not run the pre('save')
-  // hook and take care of encrypting the password 
+  // hook and take care of encrypting the password
   // code.
   const updatedUser = await User.findByIdAndUpdate(
     req.user.id,

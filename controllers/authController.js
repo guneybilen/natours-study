@@ -16,7 +16,7 @@ const signToken = id => {
 const createSendToken = (user, statusCode, res) => {
   const token = signToken(user._id);
   // console.log('token', token)
-  
+
   const cookieOptions = {
     expires: new Date(
       Date.now() + process.env.JWT_COOKIE_EXPIRES_IN * 24 * 60 * 60 * 1000
@@ -29,7 +29,7 @@ const createSendToken = (user, statusCode, res) => {
 
   // Remove password from output
   user.password = undefined;
-  
+
   // console.log(user)
 
   res.status(statusCode).json({
@@ -48,10 +48,10 @@ exports.signup = catchAsync(async (req, res, next) => {
     password: req.body.password,
     passwordConfirm: req.body.passwordConfirm
   });
- 
+
   // development: const url = 'http://127.0.0.1:3000/me';
   // production:
-  const url = `${req.protocol}://${req.get('host')}/me`; 
+  const url = `${req.protocol}://${req.get('host')}/me`;
   if (process.env.NODE_ENV === 'development') {
     await new Email(newUser, url).sendWelcome();
   }
@@ -59,7 +59,7 @@ exports.signup = catchAsync(async (req, res, next) => {
     await new SG(newUser, url).sendWelcome();
   }
   createSendToken(newUser, 201, res);
-}); 
+});
 
 exports.login = catchAsync(async (req, res, next) => {
   //console.log(req)
@@ -72,9 +72,9 @@ exports.login = catchAsync(async (req, res, next) => {
   const user = await User.findOne({ email }).select('+password');
 
   if (!user || !(await user.correctPassword(password, user.password))) {
-    return next(new AppError('Incorrect email or password', 401));    
+    return next(new AppError('Incorrect email or password', 401));
   }
-  
+
   // 3) If everything ok, send token to client
   createSendToken(user, 200, res);
 });
@@ -198,7 +198,6 @@ exports.forgotPassword = catchAsync(async (req, res, next) => {
   )}/api/v1/users/resetPassword/${resetToken}`;
 
   try {
-
     if (process.env.NODE_ENV === 'development') {
       await new Email(user, resetURL).sendPasswordReset();
     }
