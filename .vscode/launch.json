@@ -7,14 +7,15 @@
             "name": "Launch Chromium",
             "trace": true,
             "sourceMaps": true,
+            "breakOnLoad": true,
             "sourceMapPathOverrides": {
                 "*": "${workspaceFolder}/natours-study/*"
             },
             "url": "http://127.0.0.1:3000/",
-            "webRoot": "${workspaceFolder}",
+            "webRoot": "${workspaceFolder}/src",
             "runtimeExecutable": "/usr/bin/chromium",
             "runtimeArgs": [
-                "npm: start",
+                "npm run watch:js",
                 "--remote-debugging-port=9222",
                 "--no-first-run",
                 "--no-default-browser-check" 

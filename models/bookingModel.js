@@ -1,4 +1,7 @@
+/* eslint-disable */
 const mongoose = require('mongoose');
+const Tour = require('./tourModel')
+const User = require('./userModel')
 
 const bookingSchema = new mongoose.Schema({
   tour: {

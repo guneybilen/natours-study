@@ -36,3 +36,13 @@ process.on('unhandledRejection', err => {
     process.exit(1);
   });
 });
+
+// for heroku.
+// heroku spleeps the process in 30 minutes,
+// since it is a free accound deployment.
+process.on('SIGTERM', () => {
+  console.log('SIGTERM RECEIVED. Shutting down gracefully');
+  server.close(() => {
+    console.log('Process terminated!');
+  });
+});

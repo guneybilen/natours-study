@@ -9,8 +9,6 @@ const AppError = require('./../utils/appError');
 // NECESSARY WORK INTO PUG FILES.
 // IN ORDER TO ADD IMAGES IN TO THE WEBSITE.
 
-
-
 //
 //
 // for sharp middleware image editing multer needs to be
@@ -18,16 +16,16 @@ const AppError = require('./../utils/appError');
 // multer.memoryStorage() saves the image as buffer in memory.
 const multerStorage = multer.memoryStorage();
 const multerFilter = (req, file, cb) => {
-  if (file.mimetype.startsWith('image')){
-    cb(null, true)
+  if (file.mimetype.startsWith('image')) {
+    cb(null, true);
   } else {
-    cb(new AppError('Not an image! Please upload only images', 400), false)
+    cb(new AppError('Not an image! Please upload only images', 400), false);
   }
-}
+};
 
 // w/o {dest: 'public/img/users'} object
 // multer will save in memory.
-// 
+//
 // images will have a link for the image file
 // in database, but they will not be saved in
 // the database.
@@ -37,11 +35,11 @@ const upload = multer({
 });
 
 exports.uploadTourImages = upload.fields([
-  {name: 'imageCover', maxCount:1},
-  {name: 'images', maxCount:3}
+  { name: 'imageCover', maxCount: 1 },
+  { name: 'images', maxCount: 3 }
 ]);
 
-exports.resizeTourImages = catchAsync( async (req, res, next) => {
+exports.resizeTourImages = catchAsync(async (req, res, next) => {
   //console.log(req.files) // single multer upload will upload uploads into req.file.
 
   if (!req.files.imageCover || !req.files.images) return next();
@@ -50,7 +48,7 @@ exports.resizeTourImages = catchAsync( async (req, res, next) => {
   // req.file.filename = `user-${req.user.id}-${Date.now()}.jpeg`;
 
   const imageCoverFileName = `tour-${req.params.id}-${Date.now()}-cover.jpeg`;
-  
+
   // 1. cover image procesing
   await sharp(req.file.imageCover[0].buffer)
     .resize(2000, 1333)
@@ -60,32 +58,32 @@ exports.resizeTourImages = catchAsync( async (req, res, next) => {
 
   // imageCover is th field name in the databse, so it mathces
   // with the req.body.imageCover and so the db will be able to update.
-  req.body.imageCover = imageCoverFileName
+  req.body.imageCover = imageCoverFileName;
 
   // 2. 'images' processing
   req.body.images = []; // images is an array in db, so we initialize n empty array variable here.
-  
-  // aync will not work in .foreach function. async returns a promise and 
-  // you need to use map to save all promises in to an array and then when 
-  // you have an array of promises you can use Promise.all to await all promises 
+
+  // aync will not work in .foreach function. async returns a promise and
+  // you need to use map to save all promises in to an array and then when
+  // you have an array of promises you can use Promise.all to await all promises
   // to execute in array.
   // req.files.images.foreach( async (file,index) => {
-    await Promise.all(req.files.images.map( async (file,index) => {
-      const filename = `tour-${req.params.id}-${Date.now()}-${index+1}.jpeg`;
+  await Promise.all(
+    req.files.images.map(async (file, index) => {
+      const filename = `tour-${req.params.id}-${Date.now()}-${index + 1}.jpeg`;
 
       await sharp(file.buffer)
-      .resize(500, 500)
-      .toFormat('jpeg')
-      .jpeg({ quality: 90 })
-      .toFile(`public/img/users/${filename}`) 
-    
+        .resize(500, 500)
+        .toFormat('jpeg')
+        .jpeg({ quality: 90 })
+        .toFile(`public/img/users/${filename}`);
+
       req.body.images.push(filename);
     })
   );
 
   next();
 });
-
 
 // when there is one image. 'image' is name attribute in html
 // may be the id attribute I am not sure.
