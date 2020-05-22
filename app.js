@@ -1,6 +1,20 @@
+const express = require('express');
+// const http = require('http');
+
+const app = express();
+// const server = http.createServer(app);
+const server = app.listen(8810, () => {
+  console.log('App running on port 8810...');
+});
+
+const io = require('socket.io').listen(server);
+
+// const io = socket(server);
+//
+//
 const path = require('path');
 const cors = require('cors');
-const express = require('express');
+// const express = require('express');
 const morgan = require('morgan');
 const bodyParser = require('body-parser');
 //const compression = require('compression');
@@ -21,7 +35,7 @@ const reviewRouter = require('./routes/reviewRoutes');
 const bookingRouter = require('./routes/bookingRoutes');
 const viewRouter = require('./routes/viewRoutes');
 
-const app = express();
+// const app = express();
 
 //required for deploying heroku for https protocol.
 //heroku uses https by default.
@@ -116,5 +130,61 @@ app.all('*', (req, res, next) => {
 });
 
 app.use(globalErrorHandler);
+
+// const rooms = ['myroom'];
+
+const users = {};
+
+io.on('connection', so => {
+  // so.on('joinroom', room => {
+  //   if(rooms.includes(room)){
+  //   so.join(room);
+  //   return so.emit("success", `You have successfully joined the ${room} room`)
+  //   } else {
+  //     so.emit("err", "no room with this " + room)
+  //   });
+
+  if (!users[so.id]) {
+    users[so.id] = so.id;
+  }
+
+  //so.join('myroom');
+
+  if (
+    io.nsps['/'].adapter.rooms.myroom &&
+    io.nsps['/'].adapter.rooms.myroom.length > 2
+  ) {
+    return;
+  }
+
+  so.on('leave', () => {
+    Object.keys(users).forEach(function(key) {
+      console.log(users[key]);
+    });
+
+    // console.log(so.id);
+    delete users[so.id];
+    app.get('api/v1/users/logout');
+  });
+
+  so.emit('yourID', so.id);
+  io.sockets.emit('allUsers', users);
+  so.on('disconnect', () => {
+    console.log('disconnect');
+    delete users[so.id];
+    app.get('api/v1/users/logout');
+  });
+
+  so.on('callUser', data => {
+    io.to(data.userToCall).emit('hey', {
+      signal: data.signalData,
+      from: data.from
+    });
+  });
+
+  so.on('acceptCall', data => {
+    io.to(data.to).emit('callAccepted', data.signal);
+  });
+});
 
 module.exports = app;

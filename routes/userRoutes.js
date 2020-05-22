@@ -1,22 +1,22 @@
 const express = require('express');
-const multer = require('multer');
+//const multer = require('multer');
 const userController = require('./../controllers/userController');
 const authController = require('./../controllers/authController');
 
 // w/o {dest: 'public/img/users'} object
 // multer will save in memory.
-// 
+//
 // images will have a link for the image file
 // in database, but they will not be saved in
 // the database.
-const upload = multer({dest: 'public/img/users'});
+// const upload = multer({dest: 'public/img/users'});
 
 const router = express.Router();
 
 router.post('/signup', authController.signup);
 router.post('/login', authController.login);
 router.get('/logout', authController.logout);
- 
+
 router.post('/forgotPassword', authController.forgotPassword);
 router.patch('/resetPassword/:token', authController.resetPassword);
 
@@ -25,9 +25,9 @@ router.use(authController.protect);
 
 router.patch('/updateMyPassword', authController.updatePassword);
 router.get('/me', userController.getMe, userController.getUser);
-router.patch('/updateMe', userController.uploadUserPhoto, userController.resizeUserPhoto, userController.updateMe);
+//router.patch('/updateMe', userController.uploadUserPhoto, userController.resizeUserPhoto, userController.updateMe);
 router.delete('/deleteMe', userController.deleteMe);
- 
+
 router.use(authController.restrictTo('admin'));
 
 router

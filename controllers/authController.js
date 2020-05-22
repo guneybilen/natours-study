@@ -1,6 +1,7 @@
 const crypto = require('crypto');
 const { promisify } = require('util');
 const jwt = require('jsonwebtoken');
+const jwtDecode = require('jwt-decode');
 const User = require('./../models/userModel');
 const catchAsync = require('./../utils/catchAsync');
 const AppError = require('./../utils/appError');
@@ -13,9 +14,9 @@ const signToken = id => {
   });
 };
 
-const createSendToken = (user, statusCode, res) => {
+const createSendToken = async (user, statusCode, res) => {
   const token = signToken(user._id);
-  // console.log('token', token)
+  // console.log('token', token);
 
   const cookieOptions = {
     expires: new Date(
@@ -28,62 +29,111 @@ const createSendToken = (user, statusCode, res) => {
   res.cookie('jwt', token, cookieOptions);
 
   // Remove password from output
+
   user.password = undefined;
 
-  // console.log(user)
+  const filter = { _id: user._id };
+  const update = { loggedIn: true };
+
+  await User.findOneAndUpdate(filter, update, {
+    new: true
+  });
+
+  //console.log('result ', result);
+  // user.loggedIn = true;
+  // await user.save();
+  // console.log(user);
 
   res.status(statusCode).json({
-    status: 'success',
+    status: statusCode,
     token,
     data: {
       user
     }
   });
+
+  // res.status(statusCode).render('', {
+  //   title: 'Video'
+  // });
 };
 
 exports.signup = catchAsync(async (req, res, next) => {
-  const newUser = await User.create({
-    name: req.body.name,
-    email: req.body.email,
-    password: req.body.password,
-    passwordConfirm: req.body.passwordConfirm
-  });
+  // console.log(req.body);
+  let newUser = {};
+  try {
+    newUser = await User.create({
+      name: req.body.name,
+      email: req.body.email,
+      password: req.body.password,
+      passwordConfirm: req.body.passwordConfirm,
+      loggedIn: true
+    });
+  } catch (err) {
+    console.log(err);
+  }
 
   // development: const url = 'http://127.0.0.1:3000/me';
   // production:
-  const url = `${req.protocol}://${req.get('host')}/me`;
-  if (process.env.NODE_ENV === 'development') {
-    await new Email(newUser, url).sendWelcome();
-  }
-  if (process.env.NODE_ENV === 'production') {
-    await new SG(newUser, url).sendWelcome();
-  }
+  // const url = `${req.protocol}://${req.get('host')}/me`;
+  // if (process.env.NODE_ENV === 'development') {
+  //   await new Email(newUser, url).sendWelcome();
+  // }
+  // if (process.env.NODE_ENV === 'production') {
+  //   await new SG(newUser, url).sendWelcome();
+  // }
+  console.log(newUser);
   createSendToken(newUser, 201, res);
 });
 
 exports.login = catchAsync(async (req, res, next) => {
-  //console.log(req)
+  //console.log(req.body);
   const { email, password } = req.body;
   // 1) Check if email and password exist
   if (!email || !password) {
     return next(new AppError('Please provide email and password!', 400));
   }
   // 2) Check if user exists && password is correct
-  const user = await User.findOne({ email }).select('+password');
-
+  let user = {};
+  try {
+    user = await User.findOne({ email }).select('+password');
+  } catch (e) {
+    console.log(e);
+  }
   if (!user || !(await user.correctPassword(password, user.password))) {
     return next(new AppError('Incorrect email or password', 401));
+  }
+
+  if (user.loggedIn) {
+    res
+      .status(409)
+      .json({ status: 'Already Someone Logged in with Those Credentials.' });
+    return;
   }
 
   // 3) If everything ok, send token to client
   createSendToken(user, 200, res);
 });
 
-exports.logout = (req, res) => {
+exports.logout = async (req, res) => {
+  console.log('logout');
+
+  //console.log(req.cookie);
+
+  const decoded = jwtDecode(req.cookies.jwt);
+  // console.log(decoded);
+
+  const filter = { _id: decoded.id };
+  const update = { loggedIn: false };
+
+  await User.findOneAndUpdate(filter, update, {
+    new: false
+  });
+
   res.cookie('jwt', null, {
     expires: new Date(Date.now() + 10 * 1000),
     httpOnly: true
   });
+
   res.status(200).json({ status: 'success' });
 };
 
